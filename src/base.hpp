@@ -12,9 +12,10 @@
 
 struct QueueFamilyIndices {
     std::optional<uint32_t> graphicsFamily;
+    std::optional<uint32_t> presentFamily;
 
     [[nodiscard]] bool isComplete() const {
-        return graphicsFamily.has_value();
+        return graphicsFamily.has_value() && presentFamily.has_value();
     }
 };
 
@@ -32,6 +33,7 @@ public:
     VkInstance instance_{};
     VkPhysicalDevice physicalDevice_ = VK_NULL_HANDLE;
     VkQueue graphicsQueue_;
+    VkQueue presentQueue_;
     VkSurfaceKHR surface_;                                  // Window Surface Integration from glfw
     std::optional<uint32_t> graphicsFamily;
     std::vector<const char *> validationLayers_;
@@ -45,17 +47,22 @@ public:
 
     //////////////////////////////////////////////////////////
     void findQueueFamilies(VkPhysicalDevice device) {
-        QueueFamilyIndices indices;
         uint32_t queueFamilyCount = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
         std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
         int i = 0;
+        VkBool32 presentSupport = false;
         for (const auto &queueFamily : queueFamilies) {
+            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface_, &presentSupport);
+            if (presentSupport) {
+                info("Success: Found presentFamily queue indices");
+                indices_.presentFamily = i;
+            }
             if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-                info("Success: Found graphicsFamily queue");
-                indices.graphicsFamily = i;
-                indices_ = indices;
+                info("Success: Found graphicsFamily queue indices");
+                indices_.graphicsFamily = i;
+                // Once we find the device with present and graphics lets get out?
                 break;
             }
             i++;
@@ -92,19 +99,35 @@ private:
     }
 
     void createLogicalDevice() {
-        VkDeviceQueueCreateInfo queueCreateInfo{};
-        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queueCreateInfo.queueFamilyIndex = indices_.graphicsFamily.value();
-        queueCreateInfo.queueCount = 1;
+
+        std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
         float queuePriority = 1.0f;
-        queueCreateInfo.pQueuePriorities = &queuePriority;
+
+        info("\t Graphics Index: {} | Present Index: {}", indices_.graphicsFamily.value(),
+             indices_.presentFamily.value());
+
+        // Graphics Family Queue
+        VkDeviceQueueCreateInfo gfxQueueCreateInfo{};
+        gfxQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        gfxQueueCreateInfo.queueFamilyIndex = indices_.graphicsFamily.value();
+        gfxQueueCreateInfo.queueCount = 1;
+        gfxQueueCreateInfo.pQueuePriorities = &queuePriority;
+        queueCreateInfos.push_back(gfxQueueCreateInfo);
+
+        // Present Family Queue
+        VkDeviceQueueCreateInfo presentQueueCreateInfo{};
+        gfxQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        gfxQueueCreateInfo.queueFamilyIndex = indices_.presentFamily.value();
+        gfxQueueCreateInfo.queueCount = 1;
+        gfxQueueCreateInfo.pQueuePriorities = &queuePriority;
+        queueCreateInfos.push_back(presentQueueCreateInfo);
 
         VkPhysicalDeviceFeatures deviceFeatures{};
 
         VkDeviceCreateInfo deviceCreateInfo{};
         deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
-        deviceCreateInfo.queueCreateInfoCount = 1;
+        deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
+        deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
         deviceCreateInfo.enabledExtensionCount = 0;
 
@@ -120,6 +143,7 @@ private:
             throw std::runtime_error("ERROR: failed to create logical device");
         }
         info("Success: Created the Logical Device");
+        // FIXME: DO I NEED TO GET THE PRESENT FAMILY HERE?
         vkGetDeviceQueue(device_, indices_.graphicsFamily.value(), 0, &graphicsQueue_);
         info("Success: Got the graphics queue");
     }
