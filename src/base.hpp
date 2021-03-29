@@ -16,8 +16,10 @@ public:
     //////////////////////////////////////////////////////////
     const uint32_t WIDTH_ = 800;
     const uint32_t HEIGHT_ = 600;
-    GLFWwindow* window_{};
+    GLFWwindow *window_{};
     VkInstance instance_{};
+    std::vector<const char *> validationLayers_;
+
     //////////////////////////////////////////////////////////
     void run() {
         initWindow();
