@@ -41,6 +41,23 @@ void createGenericVkInstance(const char *appName, BaseApplication *app) {
     uint32_t glfwExtensionCount = 0;
     const char **glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
+    if (app->enableValidation_ && !checkValidationLayerSupport(app->validationLayers_)) {
+        throw std::runtime_error("Error: Validation Layers requested but not available");
+    }
+
+    if (app->enableValidation_) {
+        info("Success: Checked validation layer support");
+        createInfo.enabledLayerCount = static_cast<uint32_t>(app->validationLayers_.size());
+        createInfo.ppEnabledLayerNames = app->validationLayers_.data();
+        info("\t Number of validation layers present: {}", app->validationLayers_.size());
+        for (int i=0; i < app->validationLayers_.size(); ++i) {
+            info("\t Success: Enabling validation layer {}", app->validationLayers_[i]);
+        }
+    } else {
+        // No layers
+        createInfo.enabledLayerCount = 0;
+    }
+
     createInfo.enabledExtensionCount = glfwExtensionCount;
     createInfo.ppEnabledExtensionNames = glfwExtensions;
 
@@ -52,10 +69,7 @@ void createGenericVkInstance(const char *appName, BaseApplication *app) {
     }
     info("Success: Created a vulkan instance");
 
-    if (app->enableValidation_ && !checkValidationLayerSupport(app->validationLayers_)) {
-       throw std::runtime_error("Error: Validation Layers requested but not available");
-    }
-    info("Success: Checked validation layer support");
+
 }
 
 
