@@ -5,12 +5,20 @@
 #include <iostream>
 #include <glm/vec4.hpp>
 #include <GLFW/glfw3.h>
-
+#include <stdexcept>
 #include "utils.hpp"
 
 
 class BaseApplication {
 public:
+    //////////////////////////////////////////////////////////
+    // Public Member Variables
+    //////////////////////////////////////////////////////////
+    const uint32_t WIDTH_ = 800;
+    const uint32_t HEIGHT_ = 600;
+    GLFWwindow* window_{};
+    VkInstance instance_{};
+    //////////////////////////////////////////////////////////
     void run() {
         initWindow();
         initVulkan();
@@ -19,9 +27,10 @@ public:
     }
 
 private:
-    GLFWwindow* window_;
-    const uint32_t WIDTH_ = 800;
-    const uint32_t HEIGHT_ = 600;
+    //////////////////////////////////////////////////////////
+    // Private Member Variables
+    //////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////
 
     void initWindow() {
         glfwInit();
@@ -31,8 +40,9 @@ private:
     }
 
     void initVulkan() {
-
+        createInstance();
     }
+
 
     void mainLoop() {
         while (!glfwWindowShouldClose(window_)) {
@@ -45,6 +55,11 @@ private:
         glfwTerminate();
     }
 
+
+    //////////////////////////////////////////////////////////
+    // Virtual Methods
+    //////////////////////////////////////////////////////////
+    virtual void createInstance() = 0;
 
 };
 

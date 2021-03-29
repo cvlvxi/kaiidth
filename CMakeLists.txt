@@ -14,7 +14,7 @@ include_directories(src)
 add_executable(
     kaiidth
     src/main.cpp
-        src/example/helloworld.hpp)
+        src/example/helloworld.hpp src/helpers.hpp)
 
 target_link_libraries(
     kaiidth
