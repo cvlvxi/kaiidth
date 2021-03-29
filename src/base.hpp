@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include <optional>
+#include <set>
 #include "utils.hpp"
 
 struct QueueFamilyIndices {
@@ -38,6 +39,9 @@ public:
     std::optional<uint32_t> graphicsFamily;
     std::vector<const char *> validationLayers_;
     std::vector<const char *> extensions_;
+    std::vector<const char *> deviceExtensions_ = {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
 
 #if NDEBUG
     bool enableValidation_ = false;
@@ -46,6 +50,20 @@ public:
 #endif
 
     //////////////////////////////////////////////////////////
+    bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
+        uint32_t deviceExtensionCount;
+        vkEnumerateDeviceExtensionProperties(device, nullptr, &deviceExtensionCount, nullptr);
+        std::vector<VkExtensionProperties> availableExtensions(deviceExtensionCount);
+        vkEnumerateDeviceExtensionProperties(device, nullptr, &deviceExtensionCount, availableExtensions.data());
+
+        // Check against declared wanted device extensions
+        std::set<std::string> requiredExtensions(deviceExtensions_.begin(), deviceExtensions_.end());
+        for (const auto &extension: availableExtensions) {
+            requiredExtensions.erase(extension.extensionName);
+        }
+        return requiredExtensions.empty();
+    }
+
     void findQueueFamilies(VkPhysicalDevice device) {
         uint32_t queueFamilyCount = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
@@ -75,7 +93,10 @@ public:
         vkGetPhysicalDeviceProperties(device, &deviceProperties);
         vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
         findQueueFamilies(device);
-        return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && indices_.isComplete();
+        // See if it supports all the deviceExtensions we want
+        bool deviceExtensionsSupported = checkDeviceExtensionSupport(device);
+        return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && indices_.isComplete() &&
+               deviceExtensionsSupported;
     }
 
     void run() {
