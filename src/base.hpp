@@ -233,7 +233,11 @@ private:
         if (physicalDevice_ == VK_NULL_HANDLE) {
             throw std::runtime_error("Error: Failed to find a suitable GPU.");
         }
+    }
 
+    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device) {
+        SwapChainSupportDetails details;
+        return details;
     }
 
     //////////////////////////////////////////////////////////
