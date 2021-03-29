@@ -7,8 +7,21 @@ find_package(glfw3 REQUIRED)
 find_package(Threads REQUIRED)
 find_package(glm REQUIRED)
 
-add_executable(kaiidth src/main.cpp)
+add_subdirectory(extern/spdlog)
 
-target_link_libraries(kaiidth glfw Vulkan::Vulkan glm::glm)
+include_directories(src)
+
+add_executable(
+    kaiidth
+    src/main.cpp
+        src/example/helloworld.hpp)
+
+target_link_libraries(
+    kaiidth
+    glfw
+    Vulkan::Vulkan
+    glm::glm
+    spdlog
+)
 
 
