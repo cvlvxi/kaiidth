@@ -32,6 +32,7 @@ public:
     VkInstance instance_{};
     VkPhysicalDevice physicalDevice_ = VK_NULL_HANDLE;
     VkQueue graphicsQueue_;
+    VkSurfaceKHR surface_;                                  // Window Surface Integration from glfw
     std::optional<uint32_t> graphicsFamily;
     std::vector<const char *> validationLayers_;
     std::vector<const char *> extensions_;
@@ -43,13 +44,6 @@ public:
 #endif
 
     //////////////////////////////////////////////////////////
-    void run() {
-        initWindow();
-        initVulkan();
-        mainLoop();
-        cleanup();
-    }
-
     void findQueueFamilies(VkPhysicalDevice device) {
         QueueFamilyIndices indices;
         uint32_t queueFamilyCount = 0;
@@ -77,36 +71,22 @@ public:
         return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && indices_.isComplete();
     }
 
+    void run() {
+        initWindow();
+        initVulkan();
+        mainLoop();
+        cleanup();
+    }
 
 private:
     //////////////////////////////////////////////////////////
     // Private Member Variables
     //////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////
-
-    void initWindow() {
-        glfwInit();
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-        window_ = glfwCreateWindow(WIDTH_, HEIGHT_, "FIXME", nullptr, nullptr);
-    }
-
-    void initVulkan() {
-        getRequiredExtensions();
-        createInstance();
-        pickPhysicalDevice();
-        createLogicalDevice();
-    }
-
-
-    void mainLoop() {
-        while (!glfwWindowShouldClose(window_)) {
-            glfwPollEvents();
-        }
-    }
-
-    void cleanup() {
+    void cleanup() const {
         vkDestroyDevice(device_, nullptr);
+        vkDestroySurfaceKHR(instance_, surface_, nullptr);
+        vkDestroyInstance(instance_, nullptr);
         glfwDestroyWindow(window_);
         glfwTerminate();
     }
@@ -142,6 +122,34 @@ private:
         info("Success: Created the Logical Device");
         vkGetDeviceQueue(device_, indices_.graphicsFamily.value(), 0, &graphicsQueue_);
         info("Success: Got the graphics queue");
+    }
+
+    void createSurface() {
+        if (glfwCreateWindowSurface(instance_, window_, nullptr, &surface_) != VK_SUCCESS) {
+            throw std::runtime_error("ERROR: Could not create a window surface");
+        }
+        info("Success: Created the surface");
+    }
+
+    void initWindow() {
+        glfwInit();
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+        window_ = glfwCreateWindow(WIDTH_, HEIGHT_, "FIXME", nullptr, nullptr);
+    }
+
+    void initVulkan() {
+        getRequiredExtensions();
+        createInstance();
+        createSurface();
+        pickPhysicalDevice();
+        createLogicalDevice();
+    }
+
+    void mainLoop() const {
+        while (!glfwWindowShouldClose(window_)) {
+            glfwPollEvents();
+        }
     }
 
     void pickPhysicalDevice() {
