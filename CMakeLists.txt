@@ -9,6 +9,6 @@ find_package(glm REQUIRED)
 
 add_executable(kaiidth src/main.cpp)
 
-target_link_libraries(kaiidth glfw Vulkan::Vulkan)
+target_link_libraries(kaiidth glfw Vulkan::Vulkan glm::glm)
 
 
