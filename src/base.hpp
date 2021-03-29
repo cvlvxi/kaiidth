@@ -19,6 +19,11 @@ public:
     GLFWwindow *window_{};
     VkInstance instance_{};
     std::vector<const char *> validationLayers_;
+#if NDEBUG
+    bool enableValidation_ = false;
+#else
+    bool enableValidation_ = true;
+#endif
 
     //////////////////////////////////////////////////////////
     void run() {

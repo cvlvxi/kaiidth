@@ -5,6 +5,6 @@
 class HelloWorldApplication : public BaseApplication {
 private:
     void createInstance() override {
-        createGenericVkInstance("Hello World", instance_, validationLayers_);
+        createGenericVkInstance("Hello World", this);
     }
 };

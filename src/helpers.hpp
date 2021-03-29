@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstring>
+#include <example/helloworld.hpp>
 #include "base.hpp"
 
 bool checkValidationLayerSupport(std::vector<const char *> &validationLayers) {
@@ -23,7 +24,7 @@ bool checkValidationLayerSupport(std::vector<const char *> &validationLayers) {
     return true;
 }
 
-void createGenericVkInstance(const char *appName, VkInstance &instance, std::vector<const char *> &validationLayers) {
+void createGenericVkInstance(const char *appName, BaseApplication *app) {
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = appName,
@@ -45,18 +46,16 @@ void createGenericVkInstance(const char *appName, VkInstance &instance, std::vec
 
     // Global Validation Layers
     createInfo.enabledLayerCount = 0;
-    VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
+    VkResult result = vkCreateInstance(&createInfo, nullptr, &app->instance_);
     if (result != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create instance");
+        throw std::runtime_error("Error: Failed to create instance");
     }
     info("Success: Created a vulkan instance");
 
-#if NDEBUG
-    info("Not setting up validation layer");
-#else
-    checkValidationLayerSupport(validationLayers);
+    if (app->enableValidation_ && !checkValidationLayerSupport(app->validationLayers_)) {
+       throw std::runtime_error("Error: Validation Layers requested but not available");
+    }
     info("Success: Checked validation layer support");
-#endif
 }
 
 
