@@ -143,9 +143,10 @@ private:
             throw std::runtime_error("ERROR: failed to create logical device");
         }
         info("Success: Created the Logical Device");
-        // FIXME: DO I NEED TO GET THE PRESENT FAMILY HERE?
+        // FIXME: Is the graphics and present queue the same? This is ok but sometimes this will be different
         vkGetDeviceQueue(device_, indices_.graphicsFamily.value(), 0, &graphicsQueue_);
-        info("Success: Got the graphics queue");
+        vkGetDeviceQueue(device_, indices_.presentFamily.value(), 0, &presentQueue_);
+        info("Success: Got the graphics/present queue");
     }
 
     void createSurface() {
