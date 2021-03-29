@@ -20,6 +20,12 @@ struct QueueFamilyIndices {
     }
 };
 
+struct SwapChainSupportDetails {
+    VkSurfaceCapabilitiesKHR capabilities;
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> presentModes;
+};
+
 
 class BaseApplication {
 public:
@@ -48,7 +54,18 @@ public:
 #else
     bool enableValidation_ = true;
 #endif
+    //////////////////////////////////////////////////////////
+    void run() {
+        initWindow();
+        initVulkan();
+        mainLoop();
+        cleanup();
+    }
 
+private:
+    //////////////////////////////////////////////////////////
+    // Private Member Variables
+    //////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////
     bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
         uint32_t deviceExtensionCount;
@@ -64,53 +81,6 @@ public:
         return requiredExtensions.empty();
     }
 
-    void findQueueFamilies(VkPhysicalDevice device) {
-        uint32_t queueFamilyCount = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-        int i = 0;
-        VkBool32 presentSupport = false;
-        for (const auto &queueFamily : queueFamilies) {
-            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface_, &presentSupport);
-            if (presentSupport) {
-                info("Success: Found presentFamily queue indices");
-                indices_.presentFamily = i;
-            }
-            if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-                info("Success: Found graphicsFamily queue indices");
-                indices_.graphicsFamily = i;
-                // Once we find the device with present and graphics lets get out?
-                break;
-            }
-            i++;
-        }
-    }
-
-    bool isDeviceSuitable(VkPhysicalDevice device) {
-        VkPhysicalDeviceProperties deviceProperties;
-        VkPhysicalDeviceFeatures deviceFeatures;
-        vkGetPhysicalDeviceProperties(device, &deviceProperties);
-        vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
-        findQueueFamilies(device);
-        // See if it supports all the deviceExtensions we want
-        bool deviceExtensionsSupported = checkDeviceExtensionSupport(device);
-        return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && indices_.isComplete() &&
-               deviceExtensionsSupported;
-    }
-
-    void run() {
-        initWindow();
-        initVulkan();
-        mainLoop();
-        cleanup();
-    }
-
-private:
-    //////////////////////////////////////////////////////////
-    // Private Member Variables
-    //////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////
     void cleanup() const {
         vkDestroyDevice(device_, nullptr);
         vkDestroySurfaceKHR(instance_, surface_, nullptr);
@@ -184,6 +154,29 @@ private:
         info("Success: Created the surface");
     }
 
+    void findQueueFamilies(VkPhysicalDevice device) {
+        uint32_t queueFamilyCount = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+        int i = 0;
+        VkBool32 presentSupport = false;
+        for (const auto &queueFamily : queueFamilies) {
+            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface_, &presentSupport);
+            if (presentSupport) {
+                info("Success: Found presentFamily queue indices");
+                indices_.presentFamily = i;
+            }
+            if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                info("Success: Found graphicsFamily queue indices");
+                indices_.graphicsFamily = i;
+                // Once we find the device with present and graphics lets get out?
+                break;
+            }
+            i++;
+        }
+    }
+
     void initWindow() {
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -197,6 +190,19 @@ private:
         createSurface();
         pickPhysicalDevice();
         createLogicalDevice();
+    }
+
+
+    bool isDeviceSuitable(VkPhysicalDevice device) {
+        VkPhysicalDeviceProperties deviceProperties;
+        VkPhysicalDeviceFeatures deviceFeatures;
+        vkGetPhysicalDeviceProperties(device, &deviceProperties);
+        vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+        findQueueFamilies(device);
+        // See if it supports all the deviceExtensions we want
+        bool deviceExtensionsSupported = checkDeviceExtensionSupport(device);
+        return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && indices_.isComplete() &&
+               deviceExtensionsSupported;
     }
 
     void mainLoop() const {
@@ -229,7 +235,6 @@ private:
         }
 
     }
-
 
     //////////////////////////////////////////////////////////
     // Virtual Methods
