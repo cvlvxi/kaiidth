@@ -145,12 +145,19 @@ private:
 
         VkPhysicalDeviceFeatures deviceFeatures{};
 
+        // Creating the Logical Device
         VkDeviceCreateInfo deviceCreateInfo{};
         deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
         deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
         deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
-        deviceCreateInfo.enabledExtensionCount = 0;
+
+        // Extensions
+        deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions_.size());
+        deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions_.data();
+        for (const auto& extension : deviceExtensions_) {
+            info("\t Success: Enabling device extension: {}", extension);
+        }
 
         // Let's enable validation layers if set on device (even though not needed)
         if (enableValidation_) {
