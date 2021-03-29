@@ -4,12 +4,12 @@
 #include <example/helloworld.hpp>
 #include "base.hpp"
 
-bool checkValidationLayerSupport(std::vector<const char *> &validationLayers) {
+bool checkValidationLayerSupport(BaseApplication *app) {
     uint32_t layerCount;
     vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
     std::vector<VkLayerProperties> availableLayers(layerCount);
     vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-    for (const char *layerName : validationLayers) {
+    for (const char *layerName : app->validationLayers_) {
         bool layerFound = false;
         for (const auto &layerProperties: availableLayers) {
             if (strcmp(layerName, layerProperties.layerName) == 0) {
@@ -22,6 +22,17 @@ bool checkValidationLayerSupport(std::vector<const char *> &validationLayers) {
         }
     }
     return true;
+}
+
+void getGenericRequiredExtensions(BaseApplication *app) {
+    // glfw extensions
+    uint32_t glfwExtensionCount = 0;
+    const char **glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+    std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+    if (app->enableValidation_) {
+        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
+    app->extensions_ = extensions;
 }
 
 void createGenericVkInstance(const char *appName, BaseApplication *app) {
@@ -37,11 +48,9 @@ void createGenericVkInstance(const char *appName, BaseApplication *app) {
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
 
-    // glfw extensions
-    uint32_t glfwExtensionCount = 0;
-    const char **glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
-    if (app->enableValidation_ && !checkValidationLayerSupport(app->validationLayers_)) {
+
+    if (app->enableValidation_ && !checkValidationLayerSupport(app)) {
         throw std::runtime_error("Error: Validation Layers requested but not available");
     }
 
@@ -58,9 +67,8 @@ void createGenericVkInstance(const char *appName, BaseApplication *app) {
         createInfo.enabledLayerCount = 0;
     }
 
-    createInfo.enabledExtensionCount = glfwExtensionCount;
-    createInfo.ppEnabledExtensionNames = glfwExtensions;
-
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(app->extensions_.size());
+    createInfo.ppEnabledExtensionNames = app->extensions_.data();
     // Global Validation Layers
     createInfo.enabledLayerCount = 0;
     VkResult result = vkCreateInstance(&createInfo, nullptr, &app->instance_);

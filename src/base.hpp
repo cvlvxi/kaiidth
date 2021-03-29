@@ -19,6 +19,7 @@ public:
     GLFWwindow *window_{};
     VkInstance instance_{};
     std::vector<const char *> validationLayers_;
+    std::vector<const char*> extensions_;
 #if NDEBUG
     bool enableValidation_ = false;
 #else
@@ -47,6 +48,7 @@ private:
     }
 
     void initVulkan() {
+        getRequiredExtensions();
         createInstance();
     }
 
@@ -66,6 +68,7 @@ private:
     //////////////////////////////////////////////////////////
     // Virtual Methods
     //////////////////////////////////////////////////////////
+    virtual void getRequiredExtensions() = 0;
     virtual void createInstance() = 0;
 
 };
