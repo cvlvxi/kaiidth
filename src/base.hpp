@@ -27,10 +27,11 @@ public:
     const uint32_t WIDTH_ = 800;
     const uint32_t HEIGHT_ = 600;
     GLFWwindow *window_{};
-    VkInstance instance_{};
-    VkDevice device_{};
-    VkPhysicalDevice physicalDevice_ = VK_NULL_HANDLE;
     QueueFamilyIndices indices_;
+    VkDevice device_{};
+    VkInstance instance_{};
+    VkPhysicalDevice physicalDevice_ = VK_NULL_HANDLE;
+    VkQueue graphicsQueue_;
     std::optional<uint32_t> graphicsFamily;
     std::vector<const char *> validationLayers_;
     std::vector<const char *> extensions_;
@@ -139,6 +140,8 @@ private:
             throw std::runtime_error("ERROR: failed to create logical device");
         }
         info("Success: Created the Logical Device");
+        vkGetDeviceQueue(device_, indices_.graphicsFamily.value(), 0, &graphicsQueue_);
+        info("Success: Got the graphics queue");
     }
 
     void pickPhysicalDevice() {
