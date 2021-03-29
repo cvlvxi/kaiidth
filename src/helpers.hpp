@@ -11,7 +11,7 @@ bool checkValidationLayerSupport(BaseApplication *app) {
     vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
     std::vector<VkLayerProperties> availableLayers(layerCount);
     vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-    for (const char *layerName : app->validationLayers_) {
+    for (const char *layerName : app->_validationLayers) {
         bool layerFound = false;
         for (const auto &layerProperties: availableLayers) {
             if (strcmp(layerName, layerProperties.layerName) == 0) {
@@ -34,7 +34,7 @@ void getGenericRequiredExtensions(BaseApplication *app) {
     if (app->enableValidation_) {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
-    app->extensions_ = extensions;
+    app->_extensions = extensions;
 }
 
 void createGenericVkInstance(const char *appName, BaseApplication *app) {
@@ -57,22 +57,22 @@ void createGenericVkInstance(const char *appName, BaseApplication *app) {
 
     if (app->enableValidation_) {
         info("Success: Checked validation layer support");
-        createInfo.enabledLayerCount = static_cast<uint32_t>(app->validationLayers_.size());
-        createInfo.ppEnabledLayerNames = app->validationLayers_.data();
-        info("\t Number of validation layers present: {}", app->validationLayers_.size());
-        for (size_t i = 0; i < app->validationLayers_.size(); ++i) {
-            info("\t Success: Enabling validation layer {}", app->validationLayers_[i]);
+        createInfo.enabledLayerCount = static_cast<uint32_t>(app->_validationLayers.size());
+        createInfo.ppEnabledLayerNames = app->_validationLayers.data();
+        info("\t Number of validation layers present: {}", app->_validationLayers.size());
+        for (size_t i = 0; i < app->_validationLayers.size(); ++i) {
+            info("\t Success: Enabling validation layer {}", app->_validationLayers[i]);
         }
     } else {
         // No layers
         createInfo.enabledLayerCount = 0;
     }
 
-    createInfo.enabledExtensionCount = static_cast<uint32_t>(app->extensions_.size());
-    createInfo.ppEnabledExtensionNames = app->extensions_.data();
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(app->_extensions.size());
+    createInfo.ppEnabledExtensionNames = app->_extensions.data();
     // Global Validation Layers
     createInfo.enabledLayerCount = 0;
-    VkResult result = vkCreateInstance(&createInfo, nullptr, &app->instance_);
+    VkResult result = vkCreateInstance(&createInfo, nullptr, &app->_instance);
     if (result != VK_SUCCESS) {
         throw std::runtime_error("Error: Failed to create instance");
     }
