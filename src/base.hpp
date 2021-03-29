@@ -7,7 +7,12 @@
 #include <GLFW/glfw3.h>
 #include <stdexcept>
 #include <string>
+#include <optional>
 #include "utils.hpp"
+
+struct QueueFamilyIndices {
+    std::optional<uint32_t> graphicsFamily;
+};
 
 
 class BaseApplication {
@@ -20,6 +25,7 @@ public:
     GLFWwindow *window_{};
     VkInstance instance_{};
     VkPhysicalDevice physicalDevice_ = VK_NULL_HANDLE;
+    std::optional<uint32_t> graphicsFamily;
     std::vector<const char *> validationLayers_;
     std::vector<const char *> extensions_;
 
@@ -37,13 +43,32 @@ public:
         cleanup();
     }
 
+    static QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
+        QueueFamilyIndices indices;
+        uint32_t queueFamilyCount = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+        int i = 0;
+        for (const auto &queueFamily : queueFamilies) {
+            if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                info("Success: Found graphicsFamily queue");
+                indices.graphicsFamily = i;
+            }
+            i++;
+        }
+        return indices;
+    }
+
     static bool isDeviceSuitable(VkPhysicalDevice device) {
         VkPhysicalDeviceProperties deviceProperties;
         VkPhysicalDeviceFeatures deviceFeatures;
         vkGetPhysicalDeviceProperties(device, &deviceProperties);
         vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
-        return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+        return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
+               findQueueFamilies(device).graphicsFamily.has_value();
     }
+
 
 private:
     //////////////////////////////////////////////////////////
@@ -87,7 +112,7 @@ private:
         vkEnumeratePhysicalDevices(instance_, &deviceCount, devices.data());
 
         // Check devices
-        for (const auto& device: devices) {
+        for (const auto &device: devices) {
             if (isDeviceSuitable(device)) {
                 physicalDevice_ = device;
                 info("Success: Found suitable device");
@@ -100,7 +125,6 @@ private:
         }
 
     }
-
 
 
     //////////////////////////////////////////////////////////

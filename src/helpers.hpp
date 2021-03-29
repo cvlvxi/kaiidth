@@ -1,8 +1,10 @@
 #pragma once
 
 #include <cstring>
-#include <example/helloworld.hpp>
 #include "base.hpp"
+#include <example/helloworld.hpp>
+
+
 
 bool checkValidationLayerSupport(BaseApplication *app) {
     uint32_t layerCount;
@@ -28,7 +30,7 @@ void getGenericRequiredExtensions(BaseApplication *app) {
     // glfw extensions
     uint32_t glfwExtensionCount = 0;
     const char **glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-    std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+    std::vector<const char *> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
     if (app->enableValidation_) {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
@@ -49,7 +51,6 @@ void createGenericVkInstance(const char *appName, BaseApplication *app) {
     createInfo.pApplicationInfo = &appInfo;
 
 
-
     if (app->enableValidation_ && !checkValidationLayerSupport(app)) {
         throw std::runtime_error("Error: Validation Layers requested but not available");
     }
@@ -59,7 +60,7 @@ void createGenericVkInstance(const char *appName, BaseApplication *app) {
         createInfo.enabledLayerCount = static_cast<uint32_t>(app->validationLayers_.size());
         createInfo.ppEnabledLayerNames = app->validationLayers_.data();
         info("\t Number of validation layers present: {}", app->validationLayers_.size());
-        for (int i=0; i < app->validationLayers_.size(); ++i) {
+        for (int i = 0; i < app->validationLayers_.size(); ++i) {
             info("\t Success: Enabling validation layer {}", app->validationLayers_[i]);
         }
     } else {
