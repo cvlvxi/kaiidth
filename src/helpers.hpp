@@ -60,7 +60,7 @@ void createGenericVkInstance(const char *appName, BaseApplication *app) {
         createInfo.enabledLayerCount = static_cast<uint32_t>(app->validationLayers_.size());
         createInfo.ppEnabledLayerNames = app->validationLayers_.data();
         info("\t Number of validation layers present: {}", app->validationLayers_.size());
-        for (int i = 0; i < app->validationLayers_.size(); ++i) {
+        for (size_t i = 0; i < app->validationLayers_.size(); ++i) {
             info("\t Success: Enabling validation layer {}", app->validationLayers_[i]);
         }
     } else {
