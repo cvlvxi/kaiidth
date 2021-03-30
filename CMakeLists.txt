@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(MACOSX TRUE)
+endif()
+
 project(kaiidth)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -18,16 +22,19 @@ add_subdirectory(extern/spdlog)
 
 include_directories(src)
 
-add_executable(
-    kaiidth
-    src/main.cpp
-        src/example/helloworld.hpp src/helpers.hpp)
+add_executable(kaiidth src/main.cpp)
+
+if (${APPLE})
+    set(glm_lib glm)
+else ()
+    set(glm_lib glm::glm)
+endif ()
 
 target_link_libraries(
     kaiidth
     glfw
     Vulkan::Vulkan
-    glm::glm
+    ${glm_lib}
     spdlog
 )
 
