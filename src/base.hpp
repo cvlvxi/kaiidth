@@ -21,7 +21,7 @@ struct QueueFamilyIndices {
 };
 
 struct SwapChainSupportDetails {
-    VkSurfaceCapabilitiesKHR capabilities;
+    VkSurfaceCapabilitiesKHR capabilities{};
     std::vector<VkSurfaceFormatKHR> formats;
     std::vector<VkPresentModeKHR> presentModes;
 };
@@ -36,24 +36,25 @@ public:
     const uint32_t HEIGHT_ = 600;
     GLFWwindow *window_{};
     QueueFamilyIndices indices_;
-    VkDevice device_{};
-    VkInstance instance_{};
-    VkPhysicalDevice physicalDevice_ = VK_NULL_HANDLE;
-    VkQueue graphicsQueue_;
-    VkQueue presentQueue_;
-    VkSurfaceKHR surface_;                                  // Window Surface Integration from glfw
     std::optional<uint32_t> graphicsFamily;
     std::vector<const char *> validationLayers_;
     std::vector<const char *> extensions_;
     std::vector<const char *> deviceExtensions_ = {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
+    VkDevice device_{};
+    VkInstance instance_{};
+    VkPhysicalDevice physicalDevice_ = VK_NULL_HANDLE;
+    VkQueue graphicsQueue_;
+    VkQueue presentQueue_;
+    VkSurfaceKHR surface_;                                  // Window Surface Integration from glfw
 
 #if NDEBUG
     bool enableValidation_ = false;
 #else
     bool enableValidation_ = true;
 #endif
+
     //////////////////////////////////////////////////////////
     void run() {
         initWindow();
@@ -125,7 +126,7 @@ private:
         // Extensions
         deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions_.size());
         deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions_.data();
-        for (const auto& extension : deviceExtensions_) {
+        for (const auto &extension : deviceExtensions_) {
             info("\t Success: Enabling device extension: {}", extension);
         }
 
@@ -201,8 +202,17 @@ private:
         findQueueFamilies(device);
         // See if it supports all the deviceExtensions we want
         bool deviceExtensionsSupported = checkDeviceExtensionSupport(device);
-        return (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU || deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) && indices_.isComplete() &&
-               deviceExtensionsSupported;
+
+        // Check that the swapchain is ok
+        bool swapChainAdequate = false;
+        if (deviceExtensionsSupported) {
+            SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
+            swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
+            info("Success: Swapchain support is adequate");
+        }
+        return (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU ||
+                deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) && indices_.isComplete() &&
+               deviceExtensionsSupported && swapChainAdequate;
     }
 
     void mainLoop() const {
@@ -237,6 +247,19 @@ private:
 
     SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device) {
         SwapChainSupportDetails details;
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface_, &details.capabilities);
+        uint32_t formatCount;
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface_, &formatCount, nullptr);
+        if (formatCount != 0) {
+            details.formats.resize(formatCount);
+            vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface_, &formatCount, details.formats.data());
+        }
+        uint32_t presentModeCount;
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface_, &presentModeCount, nullptr);
+        if (presentModeCount != 0) {
+            details.presentModes.resize(presentModeCount);
+            vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface_, &presentModeCount, details.presentModes.data());
+        }
         return details;
     }
 
