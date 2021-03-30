@@ -201,7 +201,7 @@ private:
         findQueueFamilies(device);
         // See if it supports all the deviceExtensions we want
         bool deviceExtensionsSupported = checkDeviceExtensionSupport(device);
-        return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && indices_.isComplete() &&
+        return (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU || deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) && indices_.isComplete() &&
                deviceExtensionsSupported;
     }
 
