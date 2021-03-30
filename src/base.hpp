@@ -48,6 +48,7 @@ public:
     VkQueue graphicsQueue_;
     VkQueue presentQueue_;
     VkSurfaceKHR surface_;                                  // Window Surface Integration from glfw
+    VkSwapchainKHR swapChain_;
 
 #if NDEBUG
     bool enableValidation_ = false;
@@ -82,7 +83,51 @@ private:
         return requiredExtensions.empty();
     }
 
+    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {
+        for (const auto &availableFormat : availableFormats) {
+            if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
+                availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+                info("\t Choosing swap surface format {}", availableFormat.format);
+                return availableFormat;
+            }
+        }
+        return availableFormats[0];
+    }
+
+    VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes) {
+        for (const auto &availablePresentMode : availablePresentModes) {
+            // Triple Buffering
+            if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+                info("\t Choosing swap present mode {}", availablePresentMode);
+                return availablePresentMode;
+            }
+        }
+        info("\t Choosing swap present mode {}", VK_PRESENT_MODE_FIFO_KHR);
+        return VK_PRESENT_MODE_FIFO_KHR;
+    }
+
+    VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities) {
+        if (capabilities.currentExtent.width != UINT32_MAX) {
+            info("\t Choosing swap extent with width {} and height {}", capabilities.currentExtent.width,
+                 capabilities.currentExtent.height);
+            return capabilities.currentExtent;
+        } else {
+            VkExtent2D actualExtent = {WIDTH_, HEIGHT_};
+            actualExtent.width = std::max(
+                    capabilities.minImageExtent.width,
+                    std::min(capabilities.maxImageExtent.width,
+                             actualExtent.width));
+            actualExtent.height = std::max(
+                    capabilities.minImageExtent.height,
+                    std::min(capabilities.maxImageExtent.height,
+                             actualExtent.height));
+            info("\t Choosing swap extent with width {} and height {}", actualExtent.width, actualExtent.height);
+            return actualExtent;
+        }
+    }
+
     void cleanup() const {
+        vkDestroySwapchainKHR(device_, swapChain_, nullptr);
         vkDestroyDevice(device_, nullptr);
         vkDestroySurfaceKHR(instance_, surface_, nullptr);
         vkDestroyInstance(instance_, nullptr);
@@ -155,6 +200,60 @@ private:
         info("Success: Created the surface");
     }
 
+    void createSwapChain() {
+        SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice_);
+        VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
+        VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
+        VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
+
+        // How many images in the swap chain?
+        // + 1 means not waiting on driver to complete internal operations before getting another image to render to
+        uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+
+        // Don't allow the imageCount to be greater than the max Image Count capability
+        if (swapChainSupport.capabilities.maxImageCount > 0 &&
+            imageCount > swapChainSupport.capabilities.maxImageCount) {
+            imageCount = swapChainSupport.capabilities.maxImageCount;
+        }
+
+        VkSwapchainCreateInfoKHR swapChainCreateInfo{};
+        swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+        swapChainCreateInfo.surface = surface_;
+        swapChainCreateInfo.minImageCount = imageCount;
+        swapChainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
+//        swapChainCreateInfo.imageExtent = extent;
+        swapChainCreateInfo.imageArrayLayers = 1; // Unless stereoscopic 3d stuff this will be 1
+        swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; // What kind of operations we'll use the images in swap chain for
+
+        uint32_t queueFamilyIndices[] = {indices_.graphicsFamily.value(), indices_.presentFamily.value()};
+        if (indices_.graphicsFamily.value() != indices_.presentFamily.value()) {
+            swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+            swapChainCreateInfo.queueFamilyIndexCount = 2;
+            swapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
+        } else {
+            swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            swapChainCreateInfo.queueFamilyIndexCount = 0;
+            swapChainCreateInfo.pQueueFamilyIndices = nullptr;
+        }
+
+        // Transform the image in the swapChain? No in our case
+        swapChainCreateInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+
+        // Do we want to blend the alpha channel with other windows?
+        // This says to ignore the alpha channel below (i.e. don't do this)
+        swapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+        swapChainCreateInfo.presentMode = presentMode;
+        // Only set this to false if you want to read pixels back and get predictable results
+        swapChainCreateInfo.clipped = VK_TRUE;
+
+        if (vkCreateSwapchainKHR(device_, &swapChainCreateInfo, nullptr, &swapChain_) != VK_SUCCESS) {
+            throw std::runtime_error("Error: Could not create the swap chain");
+        }
+        info("Success: Created the swap chain");
+
+    }
+
     void findQueueFamilies(VkPhysicalDevice device) {
         uint32_t queueFamilyCount = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
@@ -191,6 +290,7 @@ private:
         createSurface();
         pickPhysicalDevice();
         createLogicalDevice();
+        createSwapChain();
     }
 
 
