@@ -39,7 +39,7 @@ public:
     std::vector<const char *> _validationLayers;
     std::vector<const char *> _extensions;
     std::vector<const char *> _deviceExtensions = {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
     std::vector<VkImage> _swapChainImages;
     std::vector<VkImageView> _swapChainImageViews;
@@ -129,17 +129,7 @@ private:
         }
     }
 
-    void cleanup() const {
-        for (auto imageView : _swapChainImageViews) {
-            vkDestroyImageView(_device, imageView, nullptr);
-        }
-        vkDestroySwapchainKHR(_device, _swapChain, nullptr);
-        vkDestroyDevice(_device, nullptr);
-        vkDestroySurfaceKHR(_instance, _surface, nullptr);
-        vkDestroyInstance(_instance, nullptr);
-        glfwDestroyWindow(_window);
-        glfwTerminate();
-    }
+
 
     void createImageViews() {
         _swapChainImageViews.resize(_swapChainImages.size());
@@ -226,9 +216,7 @@ private:
         info("Success: Got the graphics/present queue");
     }
 
-    void createGraphicsPipeline() {
 
-    }
 
     void createSurface() {
         if (glfwCreateWindowSurface(_instance, _window, nullptr, &_surface) != VK_SUCCESS) {
@@ -424,6 +412,23 @@ private:
     virtual void getRequiredExtensions() = 0;
 
     virtual void createInstance() = 0;
+
+    virtual void createGraphicsPipeline() = 0;
+
+protected:
+    virtual void cleanup() const {
+        info("Clean up: BaseApplication");
+        for (auto imageView : _swapChainImageViews) {
+            vkDestroyImageView(_device, imageView, nullptr);
+        }
+        vkDestroySwapchainKHR(_device, _swapChain, nullptr);
+        vkDestroyDevice(_device, nullptr);
+        vkDestroySurfaceKHR(_instance, _surface, nullptr);
+        vkDestroyInstance(_instance, nullptr);
+        glfwDestroyWindow(_window);
+        glfwTerminate();
+    }
+
 
 };
 
