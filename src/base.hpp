@@ -32,8 +32,8 @@ public:
     //////////////////////////////////////////////////////////
     // Public Member Variables
     //////////////////////////////////////////////////////////
-    const uint32_t _WIDTH = 800;
-    const uint32_t _HEIGHT = 600;
+    const uint32_t WIDTH = 800;
+    const uint32_t HEIGHT = 600;
     GLFWwindow *_window{};
     QueueFamilyIndices _indices;
     std::vector<const char *> _validationLayers;
@@ -41,7 +41,10 @@ public:
     std::vector<const char *> _deviceExtensions = {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
+    std::vector<VkImage> _swapChainImages;
     VkDevice _device{};
+    VkExtent2D _swapChainExtent;
+    VkFormat _swapChainImageFormat;
     VkInstance _instance{};
     VkPhysicalDevice _physicalDevice = VK_NULL_HANDLE;
     VkQueue _graphicsQueue{};
@@ -111,7 +114,7 @@ private:
                  capabilities.currentExtent.height);
             return capabilities.currentExtent;
         } else {
-            VkExtent2D actualExtent = {_WIDTH, _HEIGHT};
+            VkExtent2D actualExtent = {WIDTH, HEIGHT};
             actualExtent.width = std::max(
                     capabilities.minImageExtent.width,
                     std::min(capabilities.maxImageExtent.width,
@@ -260,6 +263,14 @@ private:
         }
         info("Success: Created the swap chain");
 
+        // Retrieve the swap chain images
+        vkGetSwapchainImagesKHR(_device, _swapChain, &imageCount, nullptr);
+        _swapChainImages.resize(imageCount);
+        vkGetSwapchainImagesKHR(_device, _swapChain, &imageCount, _swapChainImages.data());
+        info("Success: Retrieved the swapChainImages");
+
+        _swapChainImageFormat = surfaceFormat.format;
+        _swapChainExtent = extent;
     }
 
     void findQueueFamilies(VkPhysicalDevice device) {
@@ -289,7 +300,7 @@ private:
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-        _window = glfwCreateWindow(_WIDTH, _HEIGHT, "FIXME", nullptr, nullptr);
+        _window = glfwCreateWindow(WIDTH, HEIGHT, "FIXME", nullptr, nullptr);
     }
 
     void initVulkan() {
