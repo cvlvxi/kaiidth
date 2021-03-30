@@ -130,6 +130,9 @@ private:
     }
 
     void cleanup() const {
+        for (auto imageView : _swapChainImageViews) {
+            vkDestroyImageView(_device, imageView, nullptr);
+        }
         vkDestroySwapchainKHR(_device, _swapChain, nullptr);
         vkDestroyDevice(_device, nullptr);
         vkDestroySurfaceKHR(_instance, _surface, nullptr);
@@ -221,6 +224,10 @@ private:
         vkGetDeviceQueue(_device, _indices.graphicsFamily.value(), 0, &_graphicsQueue);
         vkGetDeviceQueue(_device, _indices.presentFamily.value(), 0, &_presentQueue);
         info("Success: Got the graphics/present queue");
+    }
+
+    void createGraphicsPipeline() {
+
     }
 
     void createSurface() {
@@ -338,6 +345,7 @@ private:
         createLogicalDevice();
         createSwapChain();
         createImageViews();
+        createGraphicsPipeline();
     }
 
 

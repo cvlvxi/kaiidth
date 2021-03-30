@@ -54,3 +54,7 @@ export VK_ICD_FILENAMES
 
 ## Errors vk
 `export VK_LOADER_DEBUG=all` to see issues with vulkan e.g. failed ot create instance
+
+## Compile Shaders
+- Requires glslc 
+- `python shaders/compile_shaders.py`
