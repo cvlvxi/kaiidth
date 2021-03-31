@@ -260,9 +260,8 @@ void BaseApplication::initVulkan() {
     createLogicalDevice();
     createSwapChain();
     createImageViews();
-    createGraphicsPipeline();
+    createGraphicsPipelines();
 }
-
 
 bool BaseApplication::isDeviceSuitable(VkPhysicalDevice device) {
     VkPhysicalDeviceProperties deviceProperties;

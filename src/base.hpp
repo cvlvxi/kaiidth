@@ -112,7 +112,7 @@ private:
 
     virtual void createInstance() = 0;
 
-    virtual void createGraphicsPipeline() = 0;
+    virtual void createGraphicsPipelines() = 0;
 
 };
 

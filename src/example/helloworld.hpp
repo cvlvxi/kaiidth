@@ -14,7 +14,7 @@ private:
         createGenericVkInstance("Hello World", this);
     }
 
-    void createGraphicsPipeline() override {
+    void createGraphicsPipelines() override {
         BasePipeline p = BasePipeline(*this);
 
         p.addShader("shaders/001_triangle.vert.spv", true);
