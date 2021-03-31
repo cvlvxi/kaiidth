@@ -15,7 +15,7 @@ private:
 
     void createGraphicsPipeline() override {
         addShader(this, "shaders/001_triangle.vert.spv", true);
-        addShader(this, "shaders/001_triangle.frag.spv", true);
+        addShader(this, "shaders/001_triangle.frag.spv", false);
     }
 
 };
