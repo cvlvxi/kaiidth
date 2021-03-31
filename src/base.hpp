@@ -26,6 +26,11 @@ struct SwapChainSupportDetails {
     std::vector<VkPresentModeKHR> presentModes;
 };
 
+struct ShaderModules {
+    std::vector<VkShaderModule> vertShaders;
+    std::vector<VkShaderModule> fragShaders;
+};
+
 
 class BaseApplication {
 public:
@@ -36,10 +41,11 @@ public:
     const uint32_t HEIGHT = 600;
     GLFWwindow *_window{};
     QueueFamilyIndices _indices;
+    ShaderModules _shaderModules;
     std::vector<const char *> _validationLayers;
     std::vector<const char *> _extensions;
     std::vector<const char *> _deviceExtensions = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
     std::vector<VkImage> _swapChainImages;
     std::vector<VkImageView> _swapChainImageViews;
@@ -86,7 +92,7 @@ private:
         return requiredExtensions.empty();
     }
 
-    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {
+    static VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {
         for (const auto &availableFormat : availableFormats) {
             if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
                 availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
@@ -97,7 +103,7 @@ private:
         return availableFormats[0];
     }
 
-    VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes) {
+    static VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes) {
         for (const auto &availablePresentMode : availablePresentModes) {
             // Triple Buffering
             if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
@@ -130,7 +136,6 @@ private:
     }
 
 
-
     void createImageViews() {
         _swapChainImageViews.resize(_swapChainImages.size());
         size_t idx = 0;
@@ -148,7 +153,7 @@ private:
             imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
             imageViewCreateInfo.subresourceRange.levelCount = 1;
             imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-            imageViewCreateInfo.subresourceRange.layerCount= 1;
+            imageViewCreateInfo.subresourceRange.layerCount = 1;
 
             if (vkCreateImageView(_device, &imageViewCreateInfo, nullptr, &_swapChainImageViews[idx]) != VK_SUCCESS) {
                 throw std::runtime_error("Error: Could not create Image View");
@@ -215,7 +220,6 @@ private:
         vkGetDeviceQueue(_device, _indices.presentFamily.value(), 0, &_presentQueue);
         info("Success: Got the graphics/present queue");
     }
-
 
 
     void createSurface() {
@@ -418,6 +422,14 @@ private:
 protected:
     virtual void cleanup() const {
         info("Clean up: BaseApplication");
+        info("Clean up: Shaders");
+        for (auto vertShaderModule : _shaderModules.vertShaders) {
+            vkDestroyShaderModule(_device, vertShaderModule, nullptr);
+        }
+
+        for (auto fragShaderModule : _shaderModules.fragShaders) {
+            vkDestroyShaderModule(_device, fragShaderModule, nullptr);
+        }
         for (auto imageView : _swapChainImageViews) {
             vkDestroyImageView(_device, imageView, nullptr);
         }
@@ -428,7 +440,5 @@ protected:
         glfwDestroyWindow(_window);
         glfwTerminate();
     }
-
-
 };
 

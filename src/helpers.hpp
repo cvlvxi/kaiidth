@@ -7,8 +7,9 @@
 
 std::vector<char> readFile(const std::string& filename) {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
+    info("\t Opening file {}", filename);
     if (!file.is_open()) {
-        throw std::runtime_error("Error: Failed to open file");
+        throw std::runtime_error("Error: Failed to open file. Did you compile the shader?");
     }
     size_t fileSize = (size_t) file.tellg();
     std::vector<char> buffer(fileSize);
@@ -16,6 +17,27 @@ std::vector<char> readFile(const std::string& filename) {
     file.read(buffer.data(), fileSize);
     file.close();
     return buffer;
+}
+
+VkShaderModule createShaderModule(BaseApplication *app, const std::vector<char>& code) {
+    VkShaderModuleCreateInfo shaderModuleCreateInfo{};
+    shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    shaderModuleCreateInfo.codeSize = code.size();
+    // This needs a uint32_t* rather than char *
+    shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+    VkShaderModule shaderModule;
+    if (vkCreateShaderModule(app->_device, &shaderModuleCreateInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create shader module!");
+    }
+    return shaderModule;
+}
+
+void addShader(BaseApplication *app, const std::string& filename, bool isVert) {
+    if (isVert) {
+        app->_shaderModules.vertShaders.push_back(createShaderModule(app, readFile(filename)));
+    } else {
+        app->_shaderModules.fragShaders.push_back(createShaderModule(app, readFile(filename)));
+    }
 }
 
 bool checkValidationLayerSupport(BaseApplication *app) {
