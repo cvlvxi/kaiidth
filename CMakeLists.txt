@@ -22,7 +22,7 @@ add_subdirectory(extern/spdlog)
 
 include_directories(src)
 
-add_executable(kaiidth src/main.cpp)
+add_executable(kaiidth src/main.cpp src/pipeline.hpp src/helpers.cpp src/pipeline.cpp src/base.cpp)
 
 if (${APPLE})
     set(glm_lib glm)
